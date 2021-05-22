@@ -1,14 +1,34 @@
 package mytvplan.services;
 
+import com.google.gson.JsonObject;
 import mytvplan.model.*;
+import mytvplan.model.BaseRequest;
 import mytvplan.utils.ServiceUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class GetVideo {
+public class GetVideo extends BaseResponse {
 
-    public static BaseResponse execute() throws IOException {
-        return ServiceUtils.execute("/videos", ServiceUtils.Method.GET);
+    private List<Video> videos;
+
+    public GetVideo() throws IOException {
+        super(BaseRequest.execute("/videos", BaseRequest.Method.GET));
+    }
+
+    @Override
+    protected void setResponse(JsonObject jsonObject) {
+        this.videos = new ArrayList<>();
+
+        jsonObject.get("result").getAsJsonArray().forEach(item -> {
+            videos.add(ServiceUtils.getVideoJSON(item.getAsJsonObject()));
+        });
+    }
+
+    public List<Video> getResponse() {
+        return videos;
     }
 
 }
+

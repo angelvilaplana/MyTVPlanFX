@@ -5,10 +5,9 @@ import java.util.Arrays;
 public enum TypeVideo implements InterfaceData {
 
     ALL("all"),
-    NETFLIX("Netflix"),
-    HBO("HBO"),
-    DISNEY("Disney+"),
-    TV("TV");
+    MOVIE("movie"),
+    SERIES("series"),
+    MINI_SERIES("mini-series");
 
     private final String name;
 

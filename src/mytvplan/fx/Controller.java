@@ -8,8 +8,12 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 import mytvplan.model.*;
+import mytvplan.services.DeleteVideo;
 import mytvplan.services.GetVideo;
+import mytvplan.services.PostVideo;
+import mytvplan.services.PutVideo;
 import mytvplan.utils.MessageUtils;
+import mytvplan.utils.ServiceUtils;
 
 import java.io.IOException;
 
@@ -45,9 +49,12 @@ public class Controller {
     @FXML
     private ComboBox<InterfaceData> cbRating;
 
+    private Video videoField;
+
     @FXML
     private void initialize() {
         setListVideos();
+        listenerSelectVideo();
 
         setCb(cbFilterType, TypeVideo.values(), true);
         setCb(cbFilterPlatform, PlatformVideo.values(), true);
@@ -62,15 +69,77 @@ public class Controller {
 
     private void setListVideos() {
         try {
-            BaseResponse baseResponse = GetVideo.execute();
-            if (!baseResponse.isOk()) {
-                MessageUtils.showError("Error", baseResponse.getErrorMessage());
+            listVideos.getSelectionModel().clearSelection();
+            listVideos.getItems().clear();
+            GetVideo getVideo = ServiceUtils.getVideos();
+            if (!getVideo.isOk()) {
+                MessageUtils.showError("Error", getVideo.getErrorMessage());
                 return;
             }
-            listVideos.getItems().addAll(baseResponse.getVideos());
+            listVideos.getItems().addAll(getVideo.getResponse());
         } catch (IOException e) {
             MessageUtils.showError("Error", e.getMessage());
         }
+    }
+
+    private void listenerSelectVideo() {
+        listVideos.getSelectionModel().selectedItemProperty().addListener((observableValue, lastVideo, actualVideo) -> {
+            if (actualVideo != null) {
+                videoField = actualVideo;
+                tfTitle.setText(actualVideo.getTitle());
+                cbType.getSelectionModel().select(actualVideo.getType());
+                cbPlatform.getSelectionModel().select(actualVideo.getPlatform());
+                cbCategory.getSelectionModel().select(actualVideo.getCategory());
+                cbRating.getSelectionModel().select(actualVideo.getRating());
+            }
+        });
+    }
+
+    private void updatePane() {
+        videoField = null;
+        setListVideos();
+        tfTitle.clear();
+        cbType.getSelectionModel().clearSelection();
+        cbPlatform.getSelectionModel().clearSelection();
+        cbCategory.getSelectionModel().clearSelection();
+        cbRating.getSelectionModel().clearSelection();
+    }
+
+    private boolean updateVideoField() {
+        String id = videoField == null ? null : videoField.getId();
+
+        if (tfTitle.getText() == null || tfTitle.getText().isEmpty()) {
+            MessageUtils.showError("Error", "The title field is empty");
+            return false;
+        }
+        String title = tfTitle.getText();
+
+        if (cbType.getValue() == null) {
+            MessageUtils.showError("Error", "The type field is empty");
+            return false;
+        }
+        TypeVideo type = (TypeVideo) cbType.getValue();
+
+        if (cbPlatform.getValue() == null) {
+            MessageUtils.showError("Error", "The platform field is empty");
+            return false;
+        }
+        PlatformVideo platform = (PlatformVideo) cbPlatform.getValue();
+
+        if (cbCategory.getValue() == null) {
+            MessageUtils.showError("Error", "The category field is empty");
+            return false;
+        }
+        CategoryVideo category = (CategoryVideo) cbCategory.getValue();
+
+        if (cbRating.getValue() == null) {
+            MessageUtils.showError("Error", "The rating field is empty");
+            return false;
+        }
+        RatingVideo rating = (RatingVideo) cbRating.getValue();
+
+        videoField = new Video(id, title, type, platform, category, rating);
+        return true;
     }
 
     private void setCb(ComboBox<InterfaceData> cb, InterfaceData[] data, boolean optionAll) {
@@ -103,17 +172,65 @@ public class Controller {
 
     @FXML
     void handleDelete() {
+        if (!updateVideoField()) {
+            return;
+        } else if (listVideos.getSelectionModel().getSelectedItem() == null) {
+            MessageUtils.showError("Error", "You must have a video selected to update");
+            return;
+        }
 
+        try {
+            DeleteVideo deleteVideo = ServiceUtils.deleteVideo(videoField);
+            if (deleteVideo.isOk()) {
+                MessageUtils.showMessage("Success", "Video deleted successfully");
+                updatePane();
+                return;
+            }
+            MessageUtils.showMessage("Error", deleteVideo.getErrorMessage());
+        } catch (IOException e) {
+            MessageUtils.showError("Error", e.getMessage());
+        }
     }
 
     @FXML
     void handleSave() {
+        if (!updateVideoField()) {
+            return;
+        }
 
+        try {
+            PostVideo postVideo = ServiceUtils.saveVideo(videoField);
+            if (postVideo.isOk()) {
+                MessageUtils.showMessage("Success", "Video saved successfully");
+                updatePane();
+                return;
+            }
+            MessageUtils.showMessage("Error", postVideo.getErrorMessage());
+        } catch (IOException e) {
+            MessageUtils.showError("Error", e.getMessage());
+        }
     }
 
     @FXML
     void handleUpdate() {
+        if (!updateVideoField()) {
+            return;
+        } else if (listVideos.getSelectionModel().getSelectedItem() == null) {
+            MessageUtils.showError("Error", "You must have a video selected to update");
+            return;
+        }
 
+        try {
+            PutVideo putVideo = ServiceUtils.updateVideo(videoField);
+            if (putVideo.isOk()) {
+                MessageUtils.showMessage("Success", "Video updated successfully");
+                updatePane();
+                return;
+            }
+            MessageUtils.showMessage("Error", putVideo.getErrorMessage());
+        } catch (IOException e) {
+            MessageUtils.showError("Error", e.getMessage());
+        }
     }
 
 }

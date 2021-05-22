@@ -1,65 +1,42 @@
 package mytvplan.utils;
 
-import mytvplan.model.BaseResponse;
+import com.google.gson.JsonObject;
+import mytvplan.model.*;
+import mytvplan.services.DeleteVideo;
+import mytvplan.services.GetVideo;
+import mytvplan.services.PostVideo;
+import mytvplan.services.PutVideo;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
 public class ServiceUtils {
 
-    public enum Method {
-        GET,
-        POST,
-        PUT,
-        DELETE
+    public static Video getVideoJSON(JsonObject video) {
+        String id = video.getAsJsonObject().get("_id").getAsString();
+        String title = video.getAsJsonObject().get("title").getAsString();
+        TypeVideo typeVideo = TypeVideo.getValue(video.getAsJsonObject().get("type").getAsString());
+        PlatformVideo platformVideo = PlatformVideo.getValue(video.getAsJsonObject().get("platform").getAsString());
+        CategoryVideo categoryVideo = CategoryVideo.getValue(video.getAsJsonObject().get("category").getAsString());
+        RatingVideo ratingVideo = RatingVideo.getValue(video.getAsJsonObject().get("rating").getAsString());
+
+        return new Video(id, title, typeVideo, platformVideo, categoryVideo, ratingVideo);
     }
 
-    private final static String HOST_URL = "http://localhost:8080";
-
-    public static BaseResponse execute(String params, Method method) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(HOST_URL + params).openConnection();
-        connection.setRequestMethod(method.name());
-        return getResponse(connection);
+    public static GetVideo getVideos() throws IOException {
+        return new GetVideo();
     }
 
-    public static BaseResponse execute(String params, Method method, String body) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(HOST_URL + params).openConnection();
-        connection.setRequestMethod(method.name());
-
-        OutputStream outputStream = connection.getOutputStream();
-        byte[] input = body.getBytes(StandardCharsets.UTF_8);
-        outputStream.write(input, 0, input.length);
-        outputStream.flush();
-        outputStream.close();
-
-        return getResponse(connection);
+    public static DeleteVideo deleteVideo(Video video) throws IOException {
+        return new DeleteVideo(video);
     }
 
-    private static BaseResponse getResponse(HttpURLConnection connection) throws IOException {
-        connection.connect();
+    public static PostVideo saveVideo(Video video) throws IOException {
+        video.setId(null);
+        return new PostVideo(video);
+    }
 
-        int responseCode = connection.getResponseCode();
-        InputStream inputStream;
-
-        if (200 <= responseCode && responseCode <= 299) {
-            inputStream = connection.getInputStream();
-        } else {
-            inputStream = connection.getErrorStream();
-        }
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
-
-        StringBuilder response = new StringBuilder();
-        String currentLine;
-
-        while ((currentLine = in.readLine()) != null) {
-            response.append(currentLine);
-        }
-
-        in.close();
-        return new BaseResponse(response.toString());
+    public static PutVideo updateVideo(Video video) throws IOException {
+        return new PutVideo(video);
     }
 
 }

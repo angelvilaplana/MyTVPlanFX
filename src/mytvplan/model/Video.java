@@ -36,7 +36,7 @@ public class Video {
     public JsonObject getJSON() {
         JsonObject jsonObject = new JsonObject();
         if (id != null) {
-            jsonObject.addProperty("id", id);
+            jsonObject.addProperty("_id", id);
         }
         jsonObject.addProperty("title", title);
         jsonObject.addProperty("type", type.getValue());
@@ -48,6 +48,30 @@ public class Video {
 
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public TypeVideo getType() {
+        return type;
+    }
+
+    public PlatformVideo getPlatform() {
+        return platform;
+    }
+
+    public CategoryVideo getCategory() {
+        return category;
+    }
+
+    public RatingVideo getRating() {
+        return rating;
     }
 
     @Override

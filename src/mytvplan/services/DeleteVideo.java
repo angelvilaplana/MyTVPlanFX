@@ -1,15 +1,27 @@
 package mytvplan.services;
 
-import mytvplan.model.BaseResponse;
-import mytvplan.model.Video;
+import com.google.gson.JsonObject;
+import mytvplan.model.*;
 import mytvplan.utils.ServiceUtils;
 
 import java.io.IOException;
 
-public class DeleteVideo {
+public class DeleteVideo extends BaseResponse {
 
-    public static BaseResponse execute(Video video) throws IOException {
-        return ServiceUtils.execute("/videos/" + video.getId(), ServiceUtils.Method.DELETE);
+    private Video video;
+
+    public DeleteVideo(Video video) throws IOException {
+        super(BaseRequest.execute("/videos/" + video.getId(), BaseRequest.Method.DELETE));
+    }
+
+    @Override
+    protected void setResponse(JsonObject jsonObject) {
+        JsonObject item = jsonObject.get("result").getAsJsonObject();
+        video = ServiceUtils.getVideoJSON(item);
+    }
+
+    public Video getVideo() {
+        return video;
     }
 
 }
