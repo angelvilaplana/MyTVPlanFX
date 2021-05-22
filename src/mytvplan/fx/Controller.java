@@ -8,6 +8,10 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 import mytvplan.model.*;
+import mytvplan.services.GetVideo;
+import mytvplan.utils.MessageUtils;
+
+import java.io.IOException;
 
 public class Controller {
 
@@ -43,6 +47,8 @@ public class Controller {
 
     @FXML
     private void initialize() {
+        setListVideos();
+
         setCb(cbFilterType, TypeVideo.values(), true);
         setCb(cbFilterPlatform, PlatformVideo.values(), true);
         setCb(cbFilterCategory, CategoryVideo.values(), true);
@@ -52,6 +58,19 @@ public class Controller {
         setCb(cbPlatform, PlatformVideo.values(), false);
         setCb(cbCategory, CategoryVideo.values(), false);
         setCb(cbRating, RatingVideo.values(), false);
+    }
+
+    private void setListVideos() {
+        try {
+            BaseResponse baseResponse = GetVideo.execute();
+            if (!baseResponse.isOk()) {
+                MessageUtils.showError("Error", baseResponse.getErrorMessage());
+                return;
+            }
+            listVideos.getItems().addAll(baseResponse.getVideos());
+        } catch (IOException e) {
+            MessageUtils.showError("Error", e.getMessage());
+        }
     }
 
     private void setCb(ComboBox<InterfaceData> cb, InterfaceData[] data, boolean optionAll) {

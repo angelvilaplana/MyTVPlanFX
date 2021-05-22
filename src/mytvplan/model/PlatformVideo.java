@@ -1,5 +1,7 @@
 package mytvplan.model;
 
+import java.util.Arrays;
+
 public enum PlatformVideo implements InterfaceData {
 
     ALL("all"),
@@ -17,6 +19,10 @@ public enum PlatformVideo implements InterfaceData {
     @Override
     public String getValue() {
         return name;
+    }
+
+    public static PlatformVideo getValue(String value) {
+        return Arrays.stream(PlatformVideo.values()).filter(m -> m.name.equals(value)).findAny().orElse(null);
     }
 
 }
