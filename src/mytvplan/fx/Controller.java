@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.util.StringConverter;
 import mytvplan.model.*;
 import mytvplan.services.DeleteVideo;
@@ -51,10 +52,18 @@ public class Controller {
 
     private Video videoField;
 
+    private boolean isSelectFilter;
+
     @FXML
     private void initialize() {
-        setListVideos();
+        isSelectFilter = false;
+        setListVideos("");
         listenerSelectVideo();
+
+        listenerFilter(cbFilterType, "/type");
+        listenerFilter(cbFilterPlatform, "/platform");
+        listenerFilter(cbFilterCategory, "/category");
+        listenerFilter(cbFilterRating, "/rating");
 
         setCb(cbFilterType, TypeVideo.values(), true);
         setCb(cbFilterPlatform, PlatformVideo.values(), true);
@@ -67,11 +76,13 @@ public class Controller {
         setCb(cbRating, RatingVideo.values(), false);
     }
 
-    private void setListVideos() {
+    private void setListVideos(String path) {
+        deselectFilters(path);
+
         try {
             listVideos.getSelectionModel().clearSelection();
             listVideos.getItems().clear();
-            GetVideo getVideo = ServiceUtils.getVideos();
+            GetVideo getVideo = ServiceUtils.getVideos(path);
             if (!getVideo.isOk()) {
                 MessageUtils.showError("Error", getVideo.getErrorMessage());
                 return;
@@ -95,14 +106,62 @@ public class Controller {
         });
     }
 
-    private void updatePane() {
+    private void listenerFilter(ComboBox<InterfaceData> cbFilter, String path) {
+        cbFilter.getSelectionModel().selectedItemProperty().addListener((obs, lastFilter, actualFilter) -> {
+            if (!isSelectFilter) {
+                isSelectFilter = true;
+                deselectFilters(path);
+                if (actualFilter.getValue().equals("all")) {
+                    updatePane("");
+                    return;
+                }
+                updatePane(path + "/" + actualFilter.getValue());
+            }
+        });
+    }
+
+    private void updatePane(String pathVideos) {
         videoField = null;
-        setListVideos();
+        setListVideos(pathVideos);
         tfTitle.clear();
         cbType.getSelectionModel().clearSelection();
         cbPlatform.getSelectionModel().clearSelection();
         cbCategory.getSelectionModel().clearSelection();
         cbRating.getSelectionModel().clearSelection();
+    }
+
+    private void deselectFilters(String path) {
+        if (path.indexOf("/type") == 0) {
+            cbFilterPlatform.getSelectionModel().select(0);
+            cbFilterCategory.getSelectionModel().select(0);
+            cbFilterRating.getSelectionModel().select(0);
+            isSelectFilter = false;
+            return;
+        } else if (path.indexOf("/platform") == 0) {
+            cbFilterType.getSelectionModel().select(0);
+            cbFilterCategory.getSelectionModel().select(0);
+            cbFilterRating.getSelectionModel().select(0);
+            isSelectFilter = false;
+            return;
+        } else if (path.indexOf("/category") == 0) {
+            cbFilterType.getSelectionModel().select(0);
+            cbFilterPlatform.getSelectionModel().select(0);
+            cbFilterRating.getSelectionModel().select(0);
+            isSelectFilter = false;
+            return;
+        } else if (path.indexOf("/rating") == 0) {
+            cbFilterType.getSelectionModel().select(0);
+            cbFilterPlatform.getSelectionModel().select(0);
+            cbFilterCategory.getSelectionModel().select(0);
+            isSelectFilter = false;
+            return;
+        }
+
+        cbFilterType.getSelectionModel().select(0);
+        cbFilterPlatform.getSelectionModel().select(0);
+        cbFilterCategory.getSelectionModel().select(0);
+        cbFilterRating.getSelectionModel().select(0);
+        isSelectFilter = false;
     }
 
     private boolean updateVideoField() {
@@ -183,7 +242,7 @@ public class Controller {
             DeleteVideo deleteVideo = ServiceUtils.deleteVideo(videoField);
             if (deleteVideo.isOk()) {
                 MessageUtils.showMessage("Success", "Video deleted successfully");
-                updatePane();
+                updatePane("");
                 return;
             }
             MessageUtils.showMessage("Error", deleteVideo.getErrorMessage());
@@ -202,7 +261,7 @@ public class Controller {
             PostVideo postVideo = ServiceUtils.saveVideo(videoField);
             if (postVideo.isOk()) {
                 MessageUtils.showMessage("Success", "Video saved successfully");
-                updatePane();
+                updatePane("");
                 return;
             }
             MessageUtils.showMessage("Error", postVideo.getErrorMessage());
@@ -224,7 +283,7 @@ public class Controller {
             PutVideo putVideo = ServiceUtils.updateVideo(videoField);
             if (putVideo.isOk()) {
                 MessageUtils.showMessage("Success", "Video updated successfully");
-                updatePane();
+                updatePane("");
                 return;
             }
             MessageUtils.showMessage("Error", putVideo.getErrorMessage());

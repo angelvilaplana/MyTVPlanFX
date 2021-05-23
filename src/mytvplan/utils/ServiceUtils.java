@@ -22,8 +22,8 @@ public class ServiceUtils {
         return new Video(id, title, typeVideo, platformVideo, categoryVideo, ratingVideo);
     }
 
-    public static GetVideo getVideos() throws IOException {
-        return new GetVideo();
+    public static GetVideo getVideos(String path) throws IOException {
+        return new GetVideo(path);
     }
 
     public static DeleteVideo deleteVideo(Video video) throws IOException {

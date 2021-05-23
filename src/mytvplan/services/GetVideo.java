@@ -17,6 +17,10 @@ public class GetVideo extends BaseResponse {
         super(BaseRequest.execute("/videos", BaseRequest.Method.GET));
     }
 
+    public GetVideo(String path) throws IOException {
+        super(BaseRequest.execute("/videos" + path, BaseRequest.Method.GET));
+    }
+
     @Override
     protected void setResponse(JsonObject jsonObject) {
         this.videos = new ArrayList<>();
